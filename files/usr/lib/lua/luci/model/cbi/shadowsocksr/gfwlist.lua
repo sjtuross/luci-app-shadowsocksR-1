@@ -60,40 +60,10 @@ user_remote.write = function(self, section, value)
 	fs.writefile(user_remote_file, value:gsub("\r\n", "\n"))
 end
 
-
-
--- [[ LAN Hosts ]]--
-s = m:section(TypedSection, "lan_hosts", translate("LAN Hosts"))
-s.template = "cbi/tblsection"
-s.addremove = true
-s.anonymous = true
-
-o = s:option(Value, "host", translate("Host"))
-luci.ip.neighbors({family = 4}, function(neighbor)
-if neighbor.reachable then
-	o:value(neighbor.dest:string(), "%s (%s)" %{neighbor.dest:string(), neighbor.mac})
-end
-end)
-o.datatype = "ip4addr"
-o.rmempty = false
-
-o = s:option(ListValue, "type", translate("Proxy Type"))
-o:value("direct", translate("Direct (No Proxy)"))
-o:value("normal", translate("Normal"))
-o:value("gfwlist", translate("GFW-List based auto-proxy"))
-o:value("nochina", translate("All non-China IPs"))
-o:value("game", translate("Game Mode"))
-o:value("all", translate("All Public IPs"))
-o.rmempty = false
-
-o = s:option(Flag, "enable", translate("Enable"))
-o.default = "1"
-o.rmempty = false
-
 -- ---------------------------------------------------
 local apply = luci.http.formvalue("cbi.apply")
 if apply then
-	os.execute("/etc/init.d/ssr-redir.sh restart >/dev/null 2>&1 &")
+	os.execute("/etc/init.d/ssrr restart >/dev/null 2>&1 &")
 end
 
 return m

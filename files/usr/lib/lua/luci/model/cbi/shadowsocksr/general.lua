@@ -9,7 +9,7 @@ References:
 local fs = require "nixio.fs"
 
 local state_msg = ""
-local ssr_redir_on = (luci.sys.call("pidof ssrr-redir > /dev/null") == 0)
+local ssr_redir_on = (luci.sys.call("pidof ssr-redir > /dev/null") == 0)
 local redsocks2_on = (luci.sys.call("pidof redsocks2 > /dev/null") == 0)
 
 if ssr_redir_on then	
@@ -143,6 +143,7 @@ proxy_mode = s:option(ListValue, "proxy_mode", translate("Proxy Mode"),
 	"</a>")
 proxy_mode:value("S", translate("All non-China IPs"))
 proxy_mode:value("M", translate("GFW-List based auto-proxy"))
+proxy_mode:value("V", translate("Oversea Mode"))
 proxy_mode:value("G", translate("All Public IPs"))
 proxy_mode:value("GAME", translate("Game Mode"))--alex:添加游戏模式
 proxy_mode:value("DIRECT", translate("Direct (No Proxy)"))--alex:添加访问控制
@@ -180,12 +181,38 @@ whitedomin=s:option(Flag,"white",translate("启用强制不代理网站列表"),
 whitedomin:depends("more", "1")
 
 
+-- [[ LAN Hosts ]]--
+s = m:section(TypedSection, "lan_hosts", translate("LAN Hosts"))
+s.template = "cbi/tblsection"
+s.addremove = true
+s.anonymous = true
 
+o = s:option(Value, "host", translate("Host"))
+luci.ip.neighbors({family = 4}, function(neighbor)
+if neighbor.reachable then
+	o:value(neighbor.dest:string(), "%s (%s)" %{neighbor.dest:string(), neighbor.mac})
+end
+end)
+o.datatype = "ip4addr"
+o.rmempty = false
+
+o = s:option(ListValue, "type", translate("Proxy Mode"))
+o:value("direct", translate("Direct (No Proxy)"))
+o:value("gfwlist", translate("GFW-List based auto-proxy"))
+o:value("nochina", translate("All non-China IPs"))
+o:value("oversea", translate("Oversea Mode"))
+o:value("game", translate("Game Mode"))
+o:value("all", translate("All Public IPs"))
+o.rmempty = false
+
+o = s:option(Flag, "enable", translate("Enable"))
+o.default = "1"
+o.rmempty = false
 
 -- ---------------------------------------------------
 local apply = luci.http.formvalue("cbi.apply")
 if apply then
-	os.execute("/etc/init.d/ssr-redir.sh restart >/dev/null 2>&1 &")
+	os.execute("/etc/init.d/ssrr restart >/dev/null 2>&1 &")
 end
 
 return m

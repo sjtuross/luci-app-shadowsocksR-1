@@ -98,12 +98,12 @@ start()
 EOF
 
 			sleep 1
-			/usr/bin/ssrr-redir -c $SSR_CONF -u -b0.0.0.0 -l$SS_REDIR_PORT -s$vt_server_addr -p$vt_server_port \
+			/usr/bin/ssr-redir -c $SSR_CONF -u -b0.0.0.0 -l$SS_REDIR_PORT -s$vt_server_addr -p$vt_server_port \
 				-k"$vt_password" -m$vt_method -t$vt_timeout -f $SS_REDIR_PIDFILE || return 1
 			
 			[ $enable_local = 1 ] && [ "$ssr_local_port" -gt "1" ] && {
 				echo ssrr-local enabled!
-				/usr/bin/ssrr-local -c $SSR_CONF -u -b0.0.0.0 -l$ssr_local_port -s$vt_server_addr -p$vt_server_port \
+				/usr/bin/ssr-local -c $SSR_CONF -u -b0.0.0.0 -l$ssr_local_port -s$vt_server_addr -p$vt_server_port \
 					-k"$vt_password" -m$vt_method -t$vt_timeout -f $SS_LOCAL_PIDFILE || return 1
 			}
 			
@@ -121,12 +121,12 @@ EOF
 }
 EOF
 			sleep 1
-			/usr/bin/ssrr-redir -c $SSR_CONF -u -b0.0.0.0 -l$SS_REDIR_PORT -s$vt_server_addr -p$vt_server_port \
+			/usr/bin/ssr-redir -c $SSR_CONF -u -b0.0.0.0 -l$SS_REDIR_PORT -s$vt_server_addr -p$vt_server_port \
 			-k"$vt_password" -m$vt_method -t$vt_timeout -f $SS_REDIR_PIDFILE || return 1
 			
 			[ $enable_local = 1 ] && [ "$ssr_local_port" -gt "1" ] && {
 				echo ssrr-local enabled!
-				/usr/bin/ssrr-local -u -b0.0.0.0 -l$ssr_local_port -s$vt_server_addr -p$vt_server_port \
+				/usr/bin/ssr-local -u -b0.0.0.0 -l$ssr_local_port -s$vt_server_addr -p$vt_server_port \
 					-k"$vt_password" -m$vt_method -t$vt_timeout -f $SS_LOCAL_PIDFILE || return 1
 			}
 			;;
@@ -276,15 +276,16 @@ EOF
 				#开启dnsforwarder
 				start_dnsforwarder "$vt_safe_dns" "$vt_dns_mode"
 				;;
+			oversea)#只代理中国大陆IP
+				iptables -t nat -A ssrr_pre -s $host -m set ! --match-set $vt_np_ipset dst -j RETURN
+				iptables -t mangle -A SSRUDP -s $host -j RETURN
+				;;
 			game)
 				iptables -t nat -A ssrr_pre -s $host  -m set --match-set $vt_np_ipset dst -j RETURN
 				iptables -t mangle -A SSRUDP -s $host  -m set --match-set $vt_np_ipset dst -j RETURN
 				iptables -t mangle -A SSRUDP -s $host  -p udp -j TPROXY --on-port $SS_REDIR_PORT --tproxy-mark 0x01/0x01
 				;;
 			all)
-				;;
-
-			normal)
 				;;
 		esac
 		iptables -t nat -A ssrr_pre -s $host -p tcp -j REDIRECT --to $SS_REDIR_PORT #内网访问控制
@@ -302,6 +303,9 @@ EOF
 			ipset create $vt_gfwlist hash:net family inet hashsize 1024 maxelem 65536 2>/dev/null
 			iptables -t nat -A ssrr_pre -m set ! --match-set $vt_gfwlist dst -j RETURN
 			iptables -t nat -A ssrr_pre -m set --match-set $vt_np_ipset dst -j RETURN
+			;;
+		V)#ross:只代理中国大陆IP
+			iptables -t nat -A ssrr_pre -m set ! --match-set $vt_np_ipset dst -j RETURN
 			;;
 		GAME)#alex:游戏模式
 			iptables -t nat -A ssrr_pre -m set --match-set $vt_np_ipset dst -j RETURN

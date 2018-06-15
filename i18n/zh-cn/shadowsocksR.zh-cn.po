@@ -154,8 +154,8 @@ msgstr "同时开启ssr-local"
 msgid "Open ssr-local port as well"
 msgstr "开启ssr-local有利于排查问题"
 
+msgid "LAN Hosts"
+msgstr "局域网主机"
 
-
-
-
-
+msgid "Oversea Mode"
+msgstr "海外模式"

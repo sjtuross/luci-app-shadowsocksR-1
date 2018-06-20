@@ -317,10 +317,9 @@ EOF
 			;;
 	esac
 	local subnet
-	#for subnet in $covered_subnets; do #alex:添加局域网软路由支持
-	#	iptables -t nat -A ssrr_pre -s $subnet -p tcp -j REDIRECT --to $SS_REDIR_PORT
-	#done
-	iptables -t nat -A ssrr_pre -p tcp -j REDIRECT --to $SS_REDIR_PORT #alex:添加局域网软路由支持
+	for subnet in $covered_subnets; do
+		iptables -t nat -A ssrr_pre -s $subnet -p tcp -j REDIRECT --to $SS_REDIR_PORT
+	done
 	
 	if [ "$adbyby" = '1' ];then
 		iptables -t nat -A OUTPUT -p tcp -m multiport --dports 80,443 -j ssrr_pre
